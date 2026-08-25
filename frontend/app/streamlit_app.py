@@ -2078,7 +2078,7 @@ elif page == "Transaction Analysis":
             "Running AI recovery analysis..."
         ):
 
-            result = predict_transaction(
+            result = predict_transaction_local(
                 transaction
             )
 
