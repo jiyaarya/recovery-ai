@@ -314,7 +314,7 @@ The prepared demonstration is designed to show:
 ---
 
 ## 🏗️ System Workflow
-
+```text
 Payment Failure Data
         ↓
 CSV Upload / Transaction Input
