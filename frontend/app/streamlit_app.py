@@ -968,6 +968,211 @@ def predict_transaction(transaction):
         )
 
         return None
+def predict_transaction_local(transaction):
+    """
+    Run transaction prediction directly using the local ML model.
+
+    This is used by Streamlit Cloud because localhost:8000
+    is not available in the deployed environment.
+    """
+
+    try:
+        model = joblib.load(MODEL_PATH)
+
+        feature_columns = [
+            "amount",
+            "payment_method",
+            "failure_reason",
+            "customer_lifetime_value",
+            "successful_payments",
+            "failed_payments",
+            "previous_recovery_rate",
+            "hour_of_day",
+            "days_since_last_payment",
+            "subscription_status",
+            "checkout_abandoned",
+            "retry_count",
+        ]
+
+        # Create one-row DataFrame
+        input_df = pd.DataFrame([transaction])
+
+        # Select model features
+        features = input_df[feature_columns].copy()
+
+        # ML prediction
+        probability = float(
+            model.predict_proba(features)[0][1]
+        )
+
+        expected_recovery = (
+            float(transaction["amount"]) * probability
+        )
+
+        # ----------------------------------------------------
+        # PRIORITY
+        # ----------------------------------------------------
+
+        if probability >= 0.70:
+            priority = "HIGH"
+        elif probability >= 0.40:
+            priority = "MEDIUM"
+        else:
+            priority = "LOW"
+
+        # ----------------------------------------------------
+        # STRATEGY
+        # ----------------------------------------------------
+
+        if transaction["recovered"] == 1:
+            recommended_strategy = "NO_ACTION"
+
+        elif (
+            transaction["checkout_abandoned"] == 1
+            and probability >= 0.40
+        ):
+            recommended_strategy = "SEND_PAYMENT_LINK"
+
+        elif (
+            probability >= 0.75
+            and transaction["retry_count"] < 3
+        ):
+            recommended_strategy = "RETRY_PAYMENT"
+
+        elif probability >= 0.40:
+            recommended_strategy = "RETRY_LATER"
+
+        else:
+            recommended_strategy = "ESCALATE"
+
+        # ----------------------------------------------------
+        # STRATEGY REASON
+        # ----------------------------------------------------
+
+        if recommended_strategy == "NO_ACTION":
+            strategy_reason = (
+                "The transaction has already been recovered."
+            )
+
+        elif recommended_strategy == "RETRY_PAYMENT":
+            strategy_reason = (
+                "The transaction has a high recovery probability "
+                "and the retry threshold has not been exceeded."
+            )
+
+        elif recommended_strategy == "SEND_PAYMENT_LINK":
+            strategy_reason = (
+                "The checkout was abandoned and the recovery "
+                "probability is sufficient to justify a payment link."
+            )
+
+        elif recommended_strategy == "RETRY_LATER":
+            strategy_reason = (
+                "The recovery probability indicates a potential "
+                "recovery opportunity that can be revisited later."
+            )
+
+        else:
+            strategy_reason = (
+                "The recovery probability is low, so manual "
+                "intervention is recommended."
+            )
+
+        # ----------------------------------------------------
+        # GUARDRAILS
+        # ----------------------------------------------------
+
+        if transaction["recovered"] == 1:
+
+            action_allowed = False
+            final_action = "NO_ACTION"
+            risk_level = "SAFE"
+            guardrail_reason = (
+                "Transaction has already been recovered."
+            )
+
+        elif transaction["retry_count"] >= 3:
+
+            action_allowed = False
+            final_action = "ESCALATE"
+            risk_level = "HIGH"
+            guardrail_reason = (
+                "Maximum retry threshold reached."
+            )
+
+        elif probability < 0.30:
+
+            action_allowed = False
+            final_action = "NO_ACTION"
+            risk_level = "LOW"
+            guardrail_reason = (
+                "Recovery probability is too low."
+            )
+
+        elif recommended_strategy == "RETRY_PAYMENT":
+
+            action_allowed = True
+            final_action = "RETRY_PAYMENT"
+            risk_level = "MEDIUM"
+            guardrail_reason = (
+                "High recovery probability and retry limit "
+                "has not been exceeded."
+            )
+
+        elif recommended_strategy == "SEND_PAYMENT_LINK":
+
+            action_allowed = True
+            final_action = "SEND_PAYMENT_LINK"
+            risk_level = "LOW"
+            guardrail_reason = (
+                "Payment link recovery is considered low risk."
+            )
+
+        elif recommended_strategy == "RETRY_LATER":
+
+            action_allowed = True
+            final_action = "RETRY_LATER"
+            risk_level = "LOW"
+            guardrail_reason = (
+                "Recovery opportunity can be revisited later."
+            )
+
+        else:
+
+            action_allowed = True
+            final_action = "ESCALATE"
+            risk_level = "HIGH"
+            guardrail_reason = (
+                "Manual intervention is recommended."
+            )
+
+        # ----------------------------------------------------
+        # RETURN RESULT
+        # ----------------------------------------------------
+
+        return {
+            "transaction_id": transaction.get(
+                "transaction_id",
+                "UNKNOWN"
+            ),
+            "recovery_probability": probability * 100,
+            "expected_recovery": expected_recovery,
+            "priority": priority,
+            "recommended_strategy": recommended_strategy,
+            "final_action": final_action,
+            "risk_level": risk_level,
+            "action_allowed": action_allowed,
+            "strategy_reason": strategy_reason,
+            "guardrail_reason": guardrail_reason,
+        }
+
+    except Exception as e:
+
+        st.error(
+            f"Could not analyze transaction locally: {e}"
+        )
+
+        return None
 
 
 # ============================================================
