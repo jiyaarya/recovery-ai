@@ -1,28 +1,32 @@
 # Recovery AI 💸
 
-AI-Powered Payment Recovery & Revenue Intelligence Platform
+## AI-Powered Payment Recovery & Revenue Intelligence Platform
 
 Recovery AI is an AI-powered payment recovery platform designed to help businesses identify failed-payment revenue opportunities, estimate recovery probability, prioritize transactions, and recommend the most suitable recovery strategy.
 
-Instead of treating every failed payment equally, Recovery AI uses transaction, customer, and payment-history signals to determine **what is worth recovering, how likely it is to be recovered, how much revenue could potentially be recovered, and what action should be taken next.**
+Instead of treating every failed payment equally, Recovery AI uses transaction, customer, and payment-history signals to determine:
+
+> **What is worth recovering, how likely it is to be recovered, how much revenue could potentially be recovered, and what action should be taken next.**
 
 ---
 
 ## 🚀 Live Demo
 
-🌐 **Live Application:**  
+🌐 **Live Application:**
+
 https://recovery-ai-jiya.streamlit.app/
 
-💻 **GitHub Repository:**  
+💻 **GitHub Repository:**
+
 https://github.com/jiyaarya/recovery-ai
 
 ---
 
 ## 🎯 Problem Statement
 
-Failed payments represent more than just individual transaction failures.
+Failed payments represent more than individual transaction failures.
 
-For businesses processing thousands of payments, manually identifying which failed transactions deserve attention can be difficult, inefficient, and costly.
+For businesses processing large volumes of payments, manually identifying which failed transactions deserve attention can be difficult, inefficient, and costly.
 
 The key questions are:
 
@@ -48,10 +52,10 @@ The platform:
 4. Assigns transaction priority
 5. Recommends a recovery strategy
 6. Applies safety guardrails
-7. Provides explainability for the recommendation
+7. Provides an explanation for the recommendation
 8. Allows recovery decisions to be exported for further use
 
-### Core principle
+### Core Principle
 
 > **The model recommends. The guardrails decide what the model is allowed to do.**
 
@@ -117,9 +121,8 @@ Signals include:
 - Subscription status
 - Checkout abandonment
 - Retry count
-- Recovery status
 
-These signals are passed through the trained ML model to generate a transaction-level recovery probability.
+The trained ML model uses these signals to generate a transaction-level recovery probability.
 
 ---
 
@@ -259,21 +262,42 @@ This provides a practical view of which transactions should receive attention fi
 
 ### 📥 Export Recovery Decisions
 
-After analyzing a dataset, users can download the complete recovery analysis as a CSV file.
+After analyzing a dataset, users can download the recovery analysis as a CSV file.
 
-The exported file contains the generated recovery intelligence, including:
+The exported results include:
 
-- Recovery probability
-- Expected recovery
+- Transaction ID
+- Customer ID
+- Amount
+- Payment Method
+- Failure Reason
+- Recovery Probability
+- Expected Recovery
 - Priority
-- Recommended strategy
-- Final action
-- Risk level
-- Guardrail reason
+- Recommended Strategy
+- Final Action
+- Risk Level
+- Action Allowed
+
+This makes the recovery intelligence usable outside the dashboard.
 
 ---
 
-## 🧪 Demo Transaction
+## 🧪 Demo Dataset
+
+The application can be demonstrated using a transaction dataset containing:
+
+- **50 transactions**
+- Approximately **₹14 lakh (₹0.14 crore) revenue at risk**
+- Approximately **₹7 lakh (₹0.07 crore) expected recovery**
+- **3 high-priority opportunities**
+- Approximately **50.3% recoverable revenue**
+
+These figures represent the provided demonstration dataset and are intended to illustrate the platform's recovery intelligence workflow.
+
+---
+
+## 🔎 Demo Transaction
 
 A sample transaction can be used to demonstrate the Transaction Analysis workflow.
 
@@ -302,18 +326,23 @@ A sample transaction can be used to demonstrate the Transaction Analysis workflo
 
 ### Example Output
 
-The prepared demonstration is designed to show:
+The current demonstration shows:
 
-- **Recovery Probability:** 87.06%
-- **Expected Recovery:** approximately ₹39,177
+- **Recovery Probability:** 71.24%
+- **Expected Recovery:** ₹32,058.15
 - **Priority:** HIGH
-- **Recommended Strategy:** RETRY_PAYMENT
+- **Recommended Strategy:** RETRY_LATER
+- **Final Action:** RETRY_LATER
+- **Risk Level:** LOW
 
-> Actual model outputs may vary depending on the dataset and model configuration.
+The transaction demonstrates how the system combines payment, customer, and historical recovery signals to produce a bounded recovery decision.
+
+> Model outputs can vary depending on the dataset and model configuration.
 
 ---
 
 ## 🏗️ System Workflow
+
 ```text
 Payment Failure Data
         ↓
